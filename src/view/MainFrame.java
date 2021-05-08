@@ -5,10 +5,12 @@ import utils.Property;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.TableUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -18,10 +20,19 @@ public class MainFrame extends JFrame implements ActionListener {
     JComboBox comboBox=new JComboBox();    //area
     JComboBox posComboBox=new JComboBox();    //position
     JComboBox nameComboBox=new JComboBox();    //property name
+    static {
+        try {
+            //可跨平台风格，忽略时的默认风格
+            String lookAndFeel = UIManager.getSystemLookAndFeelClassName();//当前系统风格
+            UIManager.setLookAndFeel(lookAndFeel);
 
+        }catch (Exception e) {
+
+        }
+    }
     JScrollPane panelCenter = new JScrollPane();
     JPanel panelBottom = new JPanel();
-    JButton saveButton;
+    JButton saveButton = new JButton("导出数据");
     JTable table;
     Object [] colums = {"区域名称","存放地点","资产编码", "资产名称","规格型号","数量","单价","总价","购置日期" };
     Object [] colums2 = {"区域名称","资产名称","规格型号","数量","单价","总价","购置日期"};
@@ -61,13 +72,16 @@ public class MainFrame extends JFrame implements ActionListener {
         comboBox.addActionListener(this);
         posComboBox.addActionListener(this);
         nameComboBox.addActionListener(this);
+        saveButton.addActionListener(this);
     }
 
     private void addComponentsToContainer() {
         addComboBox();
         addTable();
+        panelBottom.add(saveButton);
         container.add(panelTop, BorderLayout.NORTH);
         container.add(panelCenter, BorderLayout.CENTER);
+        container.add(panelBottom, BorderLayout.SOUTH);
     }
 
     private void setLocationAndSize() {
@@ -90,7 +104,10 @@ public class MainFrame extends JFrame implements ActionListener {
         this.setResizable(true);
         container.setSize(this.getSize());
         panelTop.setSize(container.getWidth(),container.getHeight()/5);
-        panelCenter.setSize(container.getWidth(),container.getHeight()*2/3);
+        panelCenter.setSize(container.getWidth(),container.getHeight()*3/5);
+        panelBottom.setSize(container.getWidth(), container.getHeight()/5);
+        saveButton.setSize(300,40);
+        saveButton.setFont(new Font(null,Font.PLAIN,32));
     }
 
     private void setLayoutManager() {
@@ -119,15 +136,16 @@ public class MainFrame extends JFrame implements ActionListener {
     }
     public void addTable() {
         try {
-            CSVUtil.readCSV("data/property.csv");
-        } catch (IOException e) {
+            CSVUtil.readCSV("data/property.encrypted");
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        properties = CSVUtil.filter("清华楼", "清华楼3401教室");
-        Object [][] data = CSVUtil.list2Array(properties);
-        table = new JTable(data,colums);
-//        table.setSize(panelCenter.getWidth() - 60, panelCenter.getHeight());
-//        table.setLocation(30,20);
+        properties = CSVUtil.filter("清华楼");
+        CSVUtil.summarize(properties);
+        areaIndex = 4;
+        comboBox.setSelectedIndex(areaIndex);
+        Object [][] data = CSVUtil.list2Array2(properties);
+        table = new JTable(data,colums2);
         table.setRowHeight(40);
         table.getTableHeader().setFont(new Font(null,Font.BOLD,16));
         table.setFont(new Font(null, Font.PLAIN, 14));
@@ -189,6 +207,53 @@ public class MainFrame extends JFrame implements ActionListener {
             if((nameIndex=nameComboBox.getSelectedIndex())!=0){
                properties = CSVUtil.filter(area[areaIndex-1],posIndex==0 ? null : pos[areaIndex-1][posIndex-1],propertyName[areaIndex-1][nameIndex-1]);
                addTableContent();
+            }
+        }
+        if(actionEvent.getSource()==saveButton){
+            System.out.println("导出数据");
+            for(Property property: properties){
+                System.out.println(property);
+            }
+            if(JOptionPane.showConfirmDialog(null, "导出CSV文件", "导出CSV文件", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION) {
+                JFileChooser fileChooser = new JFileChooser();
+//                System.out.println(System.getProperty("user.dir"));
+                fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir") + "/data"));
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+//                fileChooser.showSaveDialog(this);
+                fileChooser.setSelectedFile(new File("new.csv"));
+                fileChooser.setFileFilter(new FileNameExtensionFilter("CSV File","csv"));
+                fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+                fileChooser.setDialogTitle("导出CSV文件");
+                int result = fileChooser.showDialog(this, "保存");
+                while (result == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    if (selectedFile.exists() || new File(selectedFile.getName() + ".csv").exists()) {
+                        JOptionPane.showMessageDialog(null, "文件已存在，请重新命名");
+                        result = fileChooser.showDialog(this, "保存");
+                    } else {
+
+                        if (!selectedFile.getName().endsWith("csv")) {
+                            fileChooser.setSelectedFile(new File(fileChooser.getName() + ".csv"));
+                        }
+                        if (posComboBox.getSelectedIndex() != 0) {
+                            try {
+                                CSVUtil.writeCSV(fileChooser.getSelectedFile(), properties);
+                            } catch (IOException e) {
+                                System.out.println("导出数据失败");
+                                e.printStackTrace();
+                            }
+                        } else {
+                            try {
+                                CSVUtil.writeCSV2(fileChooser.getSelectedFile(), properties);
+                            } catch (IOException e) {
+                                System.out.println("导出数据失败");
+                                e.printStackTrace();
+                            }
+                        }
+                        JOptionPane.showMessageDialog(this, "导出数据成功");
+                        break;
+                    }
+                }
             }
         }
 

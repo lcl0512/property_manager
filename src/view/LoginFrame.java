@@ -4,8 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
-public class LoginFrame extends JFrame implements ActionListener {
+public class LoginFrame extends JFrame implements ActionListener , KeyListener{
 
     Container container = getContentPane();
     JLabel userLabel = new JLabel("USERNAME");
@@ -16,7 +18,16 @@ public class LoginFrame extends JFrame implements ActionListener {
     JButton resetButton = new JButton("RESET");
     JCheckBox showPassword = new JCheckBox("Show Password");
 
+    static {
+        try {
+            //可跨平台风格，忽略时的默认风格
+            String lookAndFeel = UIManager.getSystemLookAndFeelClassName();//当前系统风格
+            UIManager.setLookAndFeel(lookAndFeel);
 
+        }catch (Exception e) {
+
+        }
+    }
     LoginFrame() {
         setLayoutManager();
         setLocationAndSize();
@@ -51,6 +62,8 @@ public class LoginFrame extends JFrame implements ActionListener {
     }
 
     public void addActionEvent() {
+        passwordField.addKeyListener(this);
+        userTextField.addKeyListener(this);
         loginButton.addActionListener(this);
         resetButton.addActionListener(this);
         showPassword.addActionListener(this);
@@ -59,20 +72,8 @@ public class LoginFrame extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == loginButton) {
-            String userText;
-            String pwdText;
-            userText = userTextField.getText();
-            pwdText = new String(passwordField.getPassword());
-            System.out.println(userText+": "+pwdText);
-            if (userText.equalsIgnoreCase("admin") && pwdText.equalsIgnoreCase("12345")) {
-//                JOptionPane.showMessageDialog(this, "Login Successful");
-                dispose();
-                new MainFrame();
-            } else {
-                JOptionPane.showMessageDialog(this, "Invalid Username or Password");
-            }
-
+        if (e.getSource() == loginButton ) {
+            check();
         }
         if (e.getSource() == resetButton) {
             userTextField.setText("");
@@ -88,5 +89,37 @@ public class LoginFrame extends JFrame implements ActionListener {
 
         }
     }
+    private void check(){
+        String userText;
+        String pwdText;
+        userText = userTextField.getText();
+        pwdText = new String(passwordField.getPassword());
+        System.out.println(userText + ": " + pwdText);
+        if (userText.equals("admin") && pwdText.equals("123")) {
+            dispose();
+            new MenuFrame();
+        } else if (userText.equals("lcl") && pwdText.equals("123")){
+            dispose();
+            new MainFrame();
+        } else{
+            JOptionPane.showMessageDialog(this, "Invalid Username or Password");
+        }
+    }
 
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if(e.getKeyCode()==KeyEvent.VK_ENTER){
+            check();
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
+    }
 }

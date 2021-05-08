@@ -106,6 +106,12 @@ public class Property{
     public String toString() {
         return area + "," + position + "," + code + "," + name + "," + mode + ", " + number + "," +String.format("%.2f,%.2f",price,totalPrice)+ ","+ buyDate + "\n";
     }
+    public String toString2(){
+        return area + "," + name + "," + mode + ", " + number + "," +String.format("%.2f,%.2f",price,totalPrice)+ ","+ buyDate + "\n";
+    }
+    public String toString3(){
+        return area + "," + position + "," + name + "," + mode + ", " + number + "," +String.format("%.2f,%.2f",price,totalPrice)+ ","+ buyDate + "\n";
+    }
     public boolean equalsName(Property property){
        return this.name.equals(property.getName()) && this.mode.equals(property.getMode());
     }

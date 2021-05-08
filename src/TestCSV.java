@@ -14,8 +14,8 @@ public class TestCSV {
     @Before
     public void setup(){
         try {
-            propertyList = CSVUtil.readCSV("data/property.csv");
-        } catch (IOException e) {
+            propertyList = CSVUtil.readCSV("data/property.encrypted");
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

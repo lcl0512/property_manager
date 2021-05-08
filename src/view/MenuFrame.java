@@ -2,12 +2,20 @@ package view;
 
 import utils.CSVUtil;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 public class MenuFrame extends JFrame implements ActionListener {
     Container container = getContentPane();
@@ -15,6 +23,16 @@ public class MenuFrame extends JFrame implements ActionListener {
     JButton viewButton = new JButton("查看资产");
     JButton updateButton = new JButton("更新资产");
     JButton exitButton = new JButton("退出");
+    static {
+        try {
+            //可跨平台风格，忽略时的默认风格
+            String lookAndFeel = UIManager.getSystemLookAndFeelClassName();//当前系统风格
+            UIManager.setLookAndFeel(lookAndFeel);
+
+        }catch (Exception e) {
+
+        }
+    }
     MenuFrame(){
         setLayoutManager();
         setLocationAndSize();
@@ -72,15 +90,25 @@ public class MenuFrame extends JFrame implements ActionListener {
             this.dispose();
             new MainFrame();
         }else if(e.getSource()==updateButton){
-            JOptionPane.showConfirmDialog(null,"请选择更新后的CSV文件", "选择打开文件", JOptionPane.YES_OPTION);
-
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("CSV Documents", "csv"));
-            fileChooser.setAcceptAllFileFilterUsed(true);
-            int result = fileChooser.showOpenDialog(this);
-            File selectedFile = fileChooser.getSelectedFile();
+            if(JOptionPane.showConfirmDialog(null, "请选择更新后的CSV文件", "选择打开文件", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("CSV Documents", "csv"));
+                fileChooser.setAcceptAllFileFilterUsed(true);
+                int result = fileChooser.showOpenDialog(this);
+                if(result==JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    if (selectedFile != null) {
+                        try {
+                            CSVUtil.encryptFile(selectedFile);
+                        } catch (Exception exception) {
+                            exception.printStackTrace();
+                        }
+                        JOptionPane.showMessageDialog(null, "数据更新成功");
+                    }
+                }
+            }
 
         }else if(e.getSource()==exitButton){
             int i=JOptionPane.showConfirmDialog(null, "是否真的退出系统",
